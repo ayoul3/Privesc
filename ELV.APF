@@ -3,11 +3,11 @@
 /****************************************************************************/
 /*  ELV.APF is a tool to list APF authorized libraries and their privileges */
 /*  If a library has the ALTER/UPDATE privilege, the tool can submit a JOB  */
-/*  that compiles and launches an ASM to grant your user SPECIAL privielges */  
+/*  that compiles and launches a Prog to grant your user SPECIAL privileges */  
 /*                                                                          */
-/*  Nothing new in the techniques really but it's a handy script            */
+/*  No new techniques really but it's a handy script                        */
 /*                                                                          */
-/*  requirements: Submit a JOB                                              */
+/*  Requirements: Submit a JOB                                              */
 /*  Usage : ex 'ELV.APF' 'list' to list APF libraries and their access right*/
 /*          ex 'ELV.APF' 'APF_DSN' to have the SPECIAL privilege            */
 /*                                                                          */
