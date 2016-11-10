@@ -1,7 +1,7 @@
 # Privilege escalation on z/OS
 
 Some scripts to quickly escalate on z/OS given certain misconfigurations.  
-These techniques have been around for a while, I just stringed some code together to have something easy to use in pentest.
+These techniques have been around for a while, I just stringed some code together to have something easy to use in a pentest.
 
 ## ELV.APF    
 ### Description
