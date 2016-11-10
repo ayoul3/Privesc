@@ -7,7 +7,9 @@ These techniques have been around for a while, I just stringed some code togethe
 ### Description
 This tool will list APF authorized libraries by browsing control blocks in memory. For each library it returns the access right of the current user.  
 Given a library with ALTER/UPDATE access, the script compiles an ASM program into that library and executes it to give the SPECIAL privilege to the current user.
-the ASM program updates the ACEE block in memory to give temporary SPECIAL privilege, which are made permanent by a regular ALU user SPECIAL.
+the ASM program updates the ACEE block in memory to give temporary SPECIAL privilege, which are made permanent by a regular ALU user SPECIAL a following step.
+If you want to manually specify the user getting the SPECIAL privilege, replace userid() with any user in line 104
+
 ### Usage
  ```  
  List APF libraries : ex 'ELV.APF' 'LIST'
