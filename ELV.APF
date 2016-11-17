@@ -20,15 +20,15 @@
 
 parse arg dsn_input
 
-if dsn_input == "" then do                                             
-    say "Please pick an option"                                        
-    say "'LIST' to list the APF datasets and your access"              
-    say "Enter the name of a dataset e.g. 'SYS1.LINKLIB' to give",     
-        "yourself SPECIAL"                                             
-    say "<CR> to quit"                                                 
-    pull dsn_input                                                     
-    if length(dsn_input) < 2 then exit 0                               
-end                                                                                                                                    
+if dsn_input == "" then do                                              
+    say "Please pick an option"                                         
+    say "* Enter LIST to list the APF datasets and your access"         
+    say "* Enter the name of a dataset e.g. SYS1.LINKLIB to give",      
+        "yourself SPECIAL"                                              
+    say "* <CR> to quit"                                                
+    pull dsn_input                                                      
+    if length(dsn_input) < 2 then exit 0                                
+end                                                                                                                                                                                                    
 
 if translate(dsn_input) =="LIST" then do
     list_apf()
@@ -191,8 +191,22 @@ END
 IF OUT.0 == 1 & INDEX(OUT.1,NO_PROFILE)>0 THEN DO
    return "NO RACF PROFILE"
 END
-IF OUT.0>1 THEN DO
-   ACCESS = WORD(OUT.17,1)
-   return ACCESS
-END
+IF OUT.0>1 THEN DO                     
+   ACCESS = WORD(OUT.17,1)             
+   IF ACCESS = "UPDATE" THEN DO        
+   return "UPDATE access. Pick me!"    
+   END                                 
+   IF ACCESS = "ALTER" THEN DO         
+   return "ALTER access. Pick me!"     
+   END                                 
+   IF ACCESS = "CONTROL" THEN DO       
+   return "CONTROL access. Pick me!"   
+   END                                 
+   IF ACCESS = "READ" THEN DO          
+   return "Only READ :("               
+   END                                 
+   IF ACCESS = "NONE" THEN DO          
+   return "No access"                  
+   END                                 
+END                                    
 return -1
