@@ -18,7 +18,7 @@
 /* Check out : http://zdevops.github.io/zdosu/                              */
 /****************************************************************************/
 
-parse arg dsn_input
+parse upper arg dsn_input
 
 if dsn_input == "" then do                                              
     say "Please pick an option"                                         
