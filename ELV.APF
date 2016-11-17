@@ -20,11 +20,15 @@
 
 parse arg dsn_input
 
-if dsn_input == "" then do
-    say "Usage: ex 'ELV.APF' 'list' to list apf libraries and their privileges"
-    say "       ex 'ELV.APF' 'APF_DSN' to have the SPECIAL privilege "
-    exit(-1)
-end
+if dsn_input == "" then do                                             
+    say "Please pick an option"                                        
+    say "'LIST' to list the APF datasets and your access"              
+    say "Enter the name of a dataset e.g. 'SYS1.LINKLIB' to give",     
+        "yourself SPECIAL"                                             
+    say "<CR> to quit"                                                 
+    pull dsn_input                                                     
+    if length(dsn_input) < 2 then exit 0                               
+end                                                                                                                                    
 
 if translate(dsn_input) =="LIST" then do
     list_apf()
