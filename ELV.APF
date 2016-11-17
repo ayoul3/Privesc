@@ -177,36 +177,23 @@ End
 exit(0)
 
 check_priv:
-
 NOT_AUTH="NOT AUTHORIZED"
 NO_PROFILE="NO RACF"
-
 DSN = DSN.NUMAPF
+if DSN = "DSN.NUMAPF" then DSN = dsn_input /* hack for check_priv */
+
 X = OUTTRAP('OUT.')
 ADDRESS TSO "LD DA('"DSN"') GEN"
 Y = OUTTRAP('OFF')
+
 IF OUT.0 == 1 & INDEX(OUT.1,NOT_AUTH)>0 THEN DO
    return "NONE"
 END
 IF OUT.0 == 1 & INDEX(OUT.1,NO_PROFILE)>0 THEN DO
    return "NO RACF PROFILE"
 END
-IF OUT.0>1 THEN DO                     
-   ACCESS = WORD(OUT.17,1)             
-   IF ACCESS = "UPDATE" THEN DO        
-   return "UPDATE access. Pick me!"    
-   END                                 
-   IF ACCESS = "ALTER" THEN DO         
-   return "ALTER access. Pick me!"     
-   END                                 
-   IF ACCESS = "CONTROL" THEN DO       
-   return "CONTROL access. Pick me!"   
-   END                                 
-   IF ACCESS = "READ" THEN DO          
-   return "Only READ :("               
-   END                                 
-   IF ACCESS = "NONE" THEN DO          
-   return "No access"                  
-   END                                 
-END                                    
+IF OUT.0>1 THEN DO
+   ACCESS = WORD(OUT.17,1)
+   return ACCESS
+END                        
 return -1
