@@ -16,9 +16,7 @@
 /*         ex 'ELV.SELF' 'TAR=FTPD1 DSN=PDS_DSN SVC=233'                     */
 /*                                                                           */
 /*                                                                           */
-/* Sources: http://www.cbttape.org/xephon/xephonr/rac0005.pdf                */
-/*          http://www.mzelden.com/mvsfiles/iplinfo.txt                      */
-/*          zOS pentesting RMS partners presentation at CONFEX               */
+/* Sources: http://www.cbttape.org/xephon/xephonm/mvs9806.pdf                */
 /****************************************************************************/
 
 
