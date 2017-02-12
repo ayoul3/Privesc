@@ -38,7 +38,7 @@ If you want to change the TSO command giving special privileges, alter line 334
 ```  
 ### Credit
 Got the idea from Mark Wilson @ich408i   
-https://share.confex.com/share/120/.../2013%20Share%20Pen%20Testing.pdf  
+https://share.confex.com/share/120/webprogram/Handout/Session12275/2013%20Share%20Pen%20Testing.pdf
 http://www.cbttape.org/xephon/xephonr/rac0005.pdf  
 http://www.mzelden.com/mvsfiles/iplinfo.txt  
 
