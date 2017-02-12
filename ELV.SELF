@@ -1,13 +1,14 @@
 /* REXX */
 
 /****************************************************************************/
-/*  ELV.SELF is a tool to impersonate users/jobs/started tasks on z/OS       */
+/*  ELV.SELF is a tool to impersonate users/jobs/started tasks on z/OS.      */
 /*  It overwrites the caller's ACEE structure with a foreign ACEE            */
 /*  owned by another task/user/job.                                          */
-/*  The caller can therefore launch new jobs using the target's identity     */  
+/*  The current TSO session is patched giving the caller credentials         */  
 /*  of the chosen target (attributes, groups, console, etc.)                 */
 /*                                                                           */
 /*  Requirement: APF library with ALTER access, or SVC granting AUTH         */
+/*               Ability to submit Jobs                                      */
 /*                                                                           */
 /*     Usage from TSO:                                                       */
 /*         ex 'ELV.SELF' 'LIST' (Lists all adress spaces)                    */
@@ -16,7 +17,7 @@
 /*         ex 'ELV.SELF' 'TAR=FTPD1 DSN=PDS_DSN SVC=233'                     */
 /*                                                                           */
 /*                                                                           */
-/* Sources: http://www.cbttape.org/xephon/xephonm/mvs9806.pdf                */
+/* Inspiration: http://www.cbttape.org/xephon/xephonm/mvs9806.pdf            */
 /****************************************************************************/
 
 
