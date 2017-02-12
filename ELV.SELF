@@ -81,7 +81,7 @@ end
 
 if type = "SVC" then
   Do
-    if length(svc_reg_v) <> 8 then
+    if length(svc_reg_v) <> 0 & length(svc_reg_v) <> 8 then
       Do
         say svc_reg_v "value needs to be 4 bytes long in Hex"
         exit
@@ -339,9 +339,12 @@ launch_payload:
     QUEUE "        ESAR 2                      OBTAIN OUR ADDR SPACE ID"
     QUEUE "        ST 2,OURASN SAVE IT         SAVE OUR ADDR SPACE ID"
     QUEUE "*"
-    if svc_reg <> svc_reg & svc_num <> svc_num then
+    if svc_reg <> svc_reg then
       Do
          QUEUE "        L "||svc_reg||",PARAM         SAVE OUR ADDR SPACE ID"
+      End
+    if svc_num <> svc_num then
+      Do
          QUEUE "        SVC "||svc_num||"         SAVE OUR ADDR SPACE ID"
       End
     QUEUE "        MODESET KEY=ZERO,MODE=PROB  AUTH MODE"
@@ -422,7 +425,7 @@ launch_payload:
     QUEUE "RMTASID  DC H'"||rmt_asid||"'"
     QUEUE "TSOASID  DC H'"||local_asid||"'"
     QUEUE "XMSTOR  DS CL256"
-    if svc_reg <> svc_reg then
+    if svc_reg_v <> svc_reg_v then
       Do
          QUEUE "PARAM  DC X'"||svc_reg_v||"'"
       End
