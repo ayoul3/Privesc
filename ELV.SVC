@@ -88,7 +88,7 @@ say '     '
 say 'Custom defined SVC:'                                                              
 say '  Num Hex  EP-Addr  AM TYP APF ASF AR NP UP' ,             
       'CNT AUTH-BIT'                                                      
-Do SVCLST = 230 to 234                                                            
+Do SVCLST = 200 to 255                                                            
   SVCTENT  = Storage(D2x(SCVTSVCT+(SVCLST*8)),8)  /* SVC Table Entry */         
   SVCTENTU = Storage(D2x(SCVTSVCR+(SVCLST*24)),24) /* SVC UP TBL ENT */         
   SVCURCNT = C2d(Substr(SVCTENTU,21,2))      /* SVC update count     */         
