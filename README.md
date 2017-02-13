@@ -34,7 +34,7 @@ If you want to change the TSO command giving special privileges, alter line 334
  Look for magic SVC on TSO :  
      ex 'ELV.SVC'
  Get Special using SVC 233 and placing C1C1C1C1 in register 10: 
-     ex 'ELV.SVC' 'NUM=233 10=C1C1C1C1 DSN=TEST.PDS
+     ex 'ELV.SVC' 'NUM=233 10=C1C1C1C1 DSN=TEST.PDS'
 ```  
 ### Credit
 Got the idea from Mark Wilson @ich408i   
