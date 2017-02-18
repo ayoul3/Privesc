@@ -27,7 +27,10 @@ These are SVC generally used to temporarily grant admin privileges to normal use
 ELV.SVC looks for a specific pattern in each user SVC (num > 200) and if finds one dumps the SVC's opcode.  
 
 The tool can also be used to call this "magic" SVC to grant SPECIAL privileges to the current user. It provides the possibility to defined a constant in a register before calling the target SVC to bypass some potential checks.
-If you want to change the TSO command giving special privileges, alter line 334
+If you want to change the TSO command giving special privileges, alter line 342
+
+Register 12 is used as base register. As such, it cannot be used to pass parameters.
+
 
 ### Usage
  ```  
@@ -48,6 +51,8 @@ The tool lists address spaces currently running on z/OS: started tasks, tso user
 The user can choose an address space to "impersonate" by stealing their ACEE structure.  
 The tool will perform cross memory copy to steal the privileges of the target and patch the current TSO session  
 Requirement : APF library with ALTER access OR "magic" SVC (see above)
+
+Register 12 is used as base register. As such, it cannot be used to pass parameters.
 
 ### Usage
  ```  
