@@ -184,7 +184,7 @@ Do i=200 to 255
       Do
         say ""
         say "*** Dumping AUTH SVC "||i||" ***"
-        string = Storage(C2X(svc_auth.233),100)
+        string = Storage(C2X(svc_auth.i),100)
         say C2X(string)
       End
 End
