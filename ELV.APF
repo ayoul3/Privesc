@@ -155,7 +155,7 @@ list_apf:
       Do forever
          DSN.NUMAPF = Storage(D2x(AFIRST+24),44) /* DSN of APF library   */
          DSN.NUMAPF = Strip(DSN.NUMAPF,'T')      /* remove blanks        */
-         PRIV.NUMAPF = check_priv(DSN)
+         PRIV.NUMAPF = check_priv(DSN.NUMAPF)
          say DSN.NUMAPF ", " PRIV.NUMAPF
          CKSMS = Storage(D2x(AFIRST+4),1)        /* DSN of APF library   */
          if  bitand(CKSMS,'80'x)  = '80'x        /*  SMS data set?       */
