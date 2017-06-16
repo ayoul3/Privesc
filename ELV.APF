@@ -187,22 +187,38 @@ End
 exit(0)
 
 check_priv:
+  NOT_AUTH="NOT AUTHORIZED"
+  NO_PROFILE="NO RACF"
+  DSN = arg(1)
 
-NOT_AUTH="NOT AUTHORIZED"
-NO_PROFILE="NO RACF"
-
-DSN = arg(1)
-X = OUTTRAP('OUT.')
-ADDRESS TSO "LD DA('"DSN"') GEN"
-Y = OUTTRAP('OFF')
-IF OUT.0 == 1 & INDEX(OUT.1,NOT_AUTH)>0 THEN DO
-   return "NONE"
-END
-IF OUT.0 == 1 & INDEX(OUT.1,NO_PROFILE)>0 THEN DO
-   return "NO RACF PROFILE"
-END
-IF OUT.0>1 THEN DO
-   ACCESS = WORD(OUT.17,1)
-   return ACCESS
-END
+  /* First we Check for a specific rule */
+  /* ICH35003I */
+  A = OUTTRAP('OUT.')
+    ADDRESS TSO "LD DA('"DSN"')"
+  B = OUTTRAP('OFF')
+  IF OUT.0==1 THEN DO
+    IF INDEX(OUT.1,"ICH35003I") >0 THEN DO
+      X = OUTTRAP('OUTG.')
+        ADDRESS TSO "LD DA('"DSN"') GEN"
+      Y = OUTTRAP('OFF')
+      IF OUTG.0==1 THEN DO
+        IF INDEX(OUTG.1,NOT_AUTH)>0 THEN
+          RETURN "NONE"
+        IF INDEX(OUTG.1,NO_PROFILE)>0 THEN
+          RETURN "NO RACF PROFILE"
+      END
+      ELSE IF OUTG.0>1 THEN DO
+        ACCESS = WORD(OUTG.17,1)
+        return ACCESS
+      END
+    END
+    IF INDEX(OUT.1,NOT_AUTH)>0 THEN
+      RETURN "NONE"
+    IF INDEX(OUT.1,NO_PROFILE)>0 THEN
+      RETURN "NO RACF PROFILE"
+  END
+  ELSE IF OUT.0>1 THEN DO
+    ACCESS = WORD(OUT.17,1)
+    return ACCESS
+  END
 return -1
