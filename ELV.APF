@@ -164,11 +164,22 @@ list_apf:
       ALAST  = C2d(Storage(D2x(APFA + 12),4))    /* Last  entry          */
       LASTONE = 0   /* flag for end of list      */
       NUMAPF = 1    /* tot # of entries in list  */
+      /* Get the WARNING DATASETS. If they're on the APF list.....       */
+      W = OUTTRAP('OUTW.')
+      ADDRESS TSO "SEARCH ALL WARNING NOMASK"
+      W = OUTTRAP('OFF')
       say "+ Dataset --> Access"
       Do forever
          DSN.NUMAPF = Storage(D2x(AFIRST+24),44) /* DSN of APF library   */
          DSN.NUMAPF = Strip(DSN.NUMAPF,'T')      /* remove blanks        */
          PRIV.NUMAPF = check_priv(DSN.NUMAPF)
+         if PRIV.NUMAPF <> "ALTER" then do
+           /* We might push in via dataset in WARN mode */
+           do www = 1 to OUTW.0
+             if OUTW.www == DSN.NUMAPF then
+               /* It must be christmas!! */
+               PRIV.NUMAPF = "ALTER"
+           end
          if verbose then
             say "+" DSN.NUMAPF "-->" PRIV.NUMAPF
          else if PRIV.NUMAPF == 'ALTER' then
