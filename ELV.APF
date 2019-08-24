@@ -182,7 +182,9 @@ list_apf:
            end
          if verbose then
             say "+" DSN.NUMAPF "-->" PRIV.NUMAPF
-         else if PRIV.NUMAPF == 'ALTER' then
+         else if PRIV.NUMAPF == 'ALTER'  then
+            say "+" DSN.NUMAPF "-->" PRIV.NUMAPF
+         else if PRIV.NUMAPF == 'UPDATE' then
             say "+" DSN.NUMAPF "-->" PRIV.NUMAPF
          CKSMS = Storage(D2x(AFIRST+4),1)        /* DSN of APF library   */
          if  bitand(CKSMS,'80'x)  = '80'x        /*  SMS data set?       */
